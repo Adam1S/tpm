@@ -26,15 +26,23 @@ int main(int argc, char **argv){
  BYTE		wks[20]; //for the well known secret
  TSS_UUID	keyUUID={1,2,3,4,5,6,7,8,9,10,2};
  TSS_HKEY	hKey=0;
- TSS_HENCDATA hEncData;
+ TSS_HENCDATA hEncData, hAnotherData;
 
- BYTE napis[]="Trudno wierzyc, ze to dziala";
+ BYTE		napis[]="Trudno wierzyc, ze to dziala";
+ BYTE		*out;
+ UINT32		outSize;
  UINT32		ulDataLength=sizeof(napis);
+
+ BYTE		*unbind_data_buf;
+ UINT32		unbind_data_size;
 
 /////////////////////////////////////
 
 BYTE *prgbDataToUnBind;
 UINT32 pulDataLength;
+
+BYTE *bind_data_buf;
+UINT32 bind_data_size;
 
 /////////////////////////////////////
 
@@ -75,25 +83,15 @@ UINT32 pulDataLength;
  DBG("Set Binding Policy secret", result);
 //////////////////////////////////////////////////////////////////////////////////
 
- result=Tspi_Context_CreateObject(hContext, TSS_OBJECT_TYPE_ENCDATA,
-								TSS_ENCDATA_BIND, &hEncData);
- DBG("create encdata object", result);
- 
- result=Tspi_SetAttribUint32(hKey, TSS_TSPATTRIB_KEY_INFO,
-								TSS_TSPATTRIB_KEYINFO_ENCSCHEME,
-								TSS_ES_RSAESPKCSV15);
- DBG("set attrib uint32", result);
-
  if ((fp=fopen("binded_data.txt", "w"))==NULL) {
-      printf ("Nie mogę otworzyć pliku test.txt do zapisu!\n");
-      exit(1);
-      }
- //fprintf (fp, "%s", tekst); /* zapisz nasz łańcuch w pliku */
- fclose (fp); 
+       printf ("Nie mogę otworzyć pliku binded_data.txt do zapisu!\n");
+       exit(1);
+    }
+  fread(out,1,4,fp);
+  fclose (fp); /* zamknij plik */
 
- result = Tspi_Data_Unbind(hEncData, hKey, &pulDataLength,
-				  &prgbDataToUnBind);
- DBG("unbinded ", result);
-printf("\n\nUnbided data: %s", prgbDataToUnBind);
+ result=Tspi_Data_Unbind(out, hKey, &unbind_data_size, &unbind_data_buf);
+ DBG("Try", result);
+ 
  return 0;
 }

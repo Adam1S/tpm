@@ -27,9 +27,15 @@ int main(int argc, char **argv){
  TSS_UUID	keyUUID={1,2,3,4,5,6,7,8,9,10,2};
  TSS_HKEY	hKey=0;
  TSS_HENCDATA hEncData;
+ BYTE *hAdamData;
 
  BYTE napis[]="Trudno wierzyc, ze to dziala";
+ BYTE *out;
+ UINT32		outSize;
  UINT32		ulDataLength=sizeof(napis);
+
+printf("\nHENC ma %d rozmiaru\n\n", sizeof(hEncData));
+
 
 /////////////////////////////////////
 
@@ -79,26 +85,30 @@ UINT32 pulDataLength;
 								TSS_ENCDATA_BIND, &hEncData);
  DBG("create encdata object", result);
  
- result=Tspi_SetAttribUint32(hKey, TSS_TSPATTRIB_KEY_INFO,
-								TSS_TSPATTRIB_KEYINFO_ENCSCHEME,
-								TSS_ES_RSAESPKCSV15);
- DBG("set attrib uint32", result);
 
  result=Tspi_Data_Bind(hEncData, hKey, ulDataLength, napis);
  DBG("Binded!", result);
 
- printf("\n\n\n%x\n", &hEncData);
+ result=Tspi_GetAttribData(hEncData, TSS_TSPATTRIB_ENCDATA_BLOB, 
+									TSS_TSPATTRIB_ENCDATABLOB_BLOB, 
+									&outSize, &out);
+ DBG("Ladowanie do pliku", result);
+
+ printf("\n\n\n%x\n", hEncData);
  printf("To bind napisu %s\n\n", napis);
+
  
  if ((fp=fopen("binded_data.txt", "w"))==NULL) {
        printf ("Nie mogę otworzyć pliku binded_data.txt do zapisu!\n");
        exit(1);
     }
-  fprintf (fp, "%x", hEncData ); /* zapisz nasz łańcuch w pliku */
+  fwrite(&hEncData,1,sizeof(&hEncData),fp);
   fclose (fp); /* zamknij plik */
 
-
- result = Tspi_Data_Unbind(hEncData, hKey, &pulDataLength,
+  printf("\n\n\nlol: %d\n", sizeof(&hEncData));
+// hAdamData=hEncData;
+ memcpy(&hAdamData, &hEncData, sizeof(&hEncData));
+ result = Tspi_Data_Unbind(hAdamData, hKey, &pulDataLength,
 				  &prgbDataToUnBind);
  DBG("unbinded ", result);
  printf("\n\nUnbided data: %s", prgbDataToUnBind);
